@@ -1,0 +1,23 @@
+{
+  "name": "reward-engine",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "npm run build && node dist/server.js",
+    "start:prod": "node dist/server.js",
+    "dev": "tsx watch src/server.ts",
+    "demo": "npm run build && node dist/demo.js",
+    "talk": "npm run build && node dist/videoTalkingPoints.js",
+    "test": "npm run build && node --test dist/tests/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}
