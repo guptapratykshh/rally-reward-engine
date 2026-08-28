@@ -1,0 +1,9 @@
+data/
+*.log
+node_modules/
+dist/
+.cursor/
+.vscode/
+.DS_Store
+.env
+.env.*
