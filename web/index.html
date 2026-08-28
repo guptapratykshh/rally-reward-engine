@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rally — live match rewards</title>
+    <meta
+      name="description"
+      content="Server-authoritative rewards after every match: streaks, daily quests, and combo multipliers."
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,640&family=Outfit:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css?v=3" />
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <header class="top">
+      <div class="brand">
+        <span class="mark" aria-hidden="true"></span>
+        <div>
+          <p class="wordmark">Rally</p>
+          <p class="tag">Post-match rewards. Server decides.</p>
+        </div>
+      </div>
+      <div class="who">
+        <label class="sr" for="user-id">Player id</label>
+        <input id="user-id" name="userId" maxlength="32" autocomplete="username" spellcheck="false" />
+        <button type="button" id="load-btn">Load</button>
+        <button type="button" class="refresh" id="reset-btn">Refresh</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="stats" aria-label="Wallet">
+        <article class="stat">
+          <p class="k">Coins</p>
+          <p class="v" id="stat-coins">0</p>
+        </article>
+        <article class="stat">
+          <p class="k">Loot boxes</p>
+          <p class="v" id="stat-loot">0</p>
+        </article>
+        <article class="stat">
+          <p class="k">Win streak</p>
+          <p class="v" id="stat-streak">0</p>
+        </article>
+        <article class="stat" id="combo-card">
+          <p class="k">Combo</p>
+          <p class="v" id="stat-combo">×1</p>
+          <p class="hint" id="combo-hint">Inactive</p>
+        </article>
+      </section>
+
+      <div class="grid">
+        <section class="panel play">
+          <header class="panel-h">
+            <h1>Record a match</h1>
+            <p>The clock and match id are assigned on the server. You only send who played, the mode, and the result.</p>
+          </header>
+          <form id="match-form">
+            <fieldset>
+              <legend>Mode</legend>
+              <div class="seg" id="mode-seg">
+                <label><input type="radio" name="gameType" value="math" checked /> Math</label>
+                <label><input type="radio" name="gameType" value="algebra" /> Algebra</label>
+                <label><input type="radio" name="gameType" value="memory" /> Memory</label>
+                <label><input type="radio" name="gameType" value="logic" /> Logic</label>
+              </div>
+            </fieldset>
+            <div class="result-row">
+              <button type="submit" name="result" value="win" class="win">Win</button>
+              <button type="submit" name="result" value="lost" class="lost">Loss</button>
+            </div>
+          </form>
+          <p class="flash" id="flash" hidden></p>
+        </section>
+
+        <section class="panel quests">
+          <header class="panel-h">
+            <h2>Live quests</h2>
+            <p>Every ingest evaluates all three. Grants are idempotent.</p>
+          </header>
+          <ul class="quest-list">
+            <li>
+              <div class="q-top">
+                <strong>Win 3 in a row</strong>
+                <span id="q1-count">0 / 3</span>
+              </div>
+              <div class="bar"><i id="q1-bar"></i></div>
+              <p>+50 coins. Any mode. A loss resets the streak.</p>
+            </li>
+            <li>
+              <div class="q-top">
+                <strong>Play 5 in a day</strong>
+                <span id="q2-count">0 / 5</span>
+              </div>
+              <div class="bar"><i id="q2-bar"></i></div>
+              <p>One loot box at 5. Already claimed today: <em id="q2-claimed">no</em></p>
+            </li>
+            <li>
+              <div class="q-top">
+                <strong>2 algebra wins / hour</strong>
+                <span id="q3-count">0 / 2</span>
+              </div>
+              <div class="bar"><i id="q3-bar"></i></div>
+              <p>Activates ×2 combo for the next hour.</p>
+            </li>
+          </ul>
+        </section>
+
+        <section class="panel tape">
+          <header class="panel-h">
+            <h2>Match tape</h2>
+            <p>Ordered by <code>timeInterval</code>, never by who arrived first.</p>
+          </header>
+          <ol id="tape" class="tape-list"></ol>
+        </section>
+
+        <section class="panel grants">
+          <header class="panel-h">
+            <h2>Grant ledger</h2>
+            <p>Unique on user + rule + trigger. Retries cannot double-pay.</p>
+          </header>
+          <ul id="grants" class="grant-list"></ul>
+        </section>
+      </div>
+
+      <section class="panel lab">
+        <header class="panel-h">
+          <h2>T0 concurrency lab</h2>
+          <p>
+            Already in the DB (not HTTP): Lost, Win, Win. Then exactly <strong>two</strong> threads fire at the same
+            instant — one win, one loss — both for this player. They share one <code>userId</code> lock, so they never
+            evaluate in parallel. The win is earlier in <code>timeInterval</code>, so it is the 3rd streak win (+50
+            coins). The loss then breaks the live streak to 0.
+          </p>
+        </header>
+        <button type="button" id="lab-btn" class="lab-btn">Run both APIs at T0</button>
+        <pre id="lab-out" class="lab-out" hidden></pre>
+      </section>
+    </main>
+
+    <footer>
+      <p>Single process, file-backed. Lock grain is the player, not the match. Ready for one-box deploy.</p>
+    </footer>
+    <script src="/app.js?v=4" type="module"></script>
+  </body>
+</html>
